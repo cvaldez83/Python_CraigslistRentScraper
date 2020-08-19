@@ -8,9 +8,32 @@ def Scrape(city):
     from bs4 import BeautifulSoup
     import numpy as np
     import re
+    from fp.fp import FreeProxy
+
+    
+
+    def get_proxies():
+        print('getting proxies...')
+        proxy = FreeProxy(country_id='US').get()
+        proxies = {'http': proxy}
+        print(f'obtained proxies: {proxies}')
+        return proxies
+
+    def get_response(url, proxies):
+        response = get(url, proxies=proxies)
+        while response.status_code != 200:
+            print(f'response code not 200: {response.status_code}')
+            proxies = get_proxies()
+            response = get(url, proxies=proxies)
+            resp_code = response.status_code
+        print(f'obtained response code: {response.status_code}')
+        return response
+        
+    """ get an initial proxy, hopefully it works thru entire script """
+    proxies = get_proxies()
 
     """ get the first page of apts/hsg for rent in {city} """
-    response = get(f'https://{city}.craigslist.org/search/csd/apa?hasPic=1&availabilityMode=0&sale_date=all+dates')
+    response = get_response(f'https://{city}.craigslist.org/search/apa?hasPic=1&availabilityMode=0&sale_date=all+dates', proxies=proxies)
 
     html_soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -43,7 +66,7 @@ def Scrape(city):
 
         url_str = ("https://"
                     + city
-                    + ".craigslist.org/search/csd/apa?"
+                    + ".craigslist.org/search/apa?"
                     + "s="
                     + str(page)
                     + "&availabilityMode=0"
@@ -51,7 +74,7 @@ def Scrape(city):
         print(f'page: {url_str}')
 
         """ get response from url_str and throttle requests"""
-        response = get(url_str)
+        response = get_response(url_str, proxies=proxies)
         sleep(randint(1,5))
 
         # """ throw warning for status codes that are not 200 """
@@ -95,7 +118,7 @@ def Scrape(city):
                 # print(post_price)
 
                 """ Dive deeper by scraping each post_link """
-                response_deepdive = get(post_link)
+                response_deepdive = get_response(post_link, proxies=proxies)
                 sleep(randint(1,5))
                 html_soup_deepdive = BeautifulSoup(response_deepdive.text, 'html.parser')
                 
@@ -116,7 +139,7 @@ def Scrape(city):
                 
 
                 """ grab bedrooms using regex from deep dive"""
-                if re.findall("\dBR",attr_group):
+                if attr_group is not None and re.findall("\dBR",attr_group):
                 # if 'BR' in attr_group:
                     post_bedroom = re.findall("\dBR",attr_group)[0]
                     post_bedroom = int(post_bedroom[:-2])
@@ -128,7 +151,7 @@ def Scrape(city):
                     post_bedrooms.append(np.nan)
 
                 """ grab bathrooms using regex from deep dive """
-                if re.findall("\dBa",attr_group):
+                if attr_group is not None and re.findall("\dBa",attr_group):
                 # if 'Ba' in attr_group:
                     post_bathroom = re.findall("\dBa",attr_group)[0]
                     post_bathroom = int(post_bathroom[:-2])
@@ -140,7 +163,7 @@ def Scrape(city):
                     post_bathrooms.append(np.nan)
 
                 """ grab squarefootage using regex from deep dive """
-                if re.findall("\d*ft",attr_group):
+                if attr_group is not None and re.findall("\d*ft",attr_group):
                 # if 'ft2' in attr_group:
                     post_sqft = re.findall("\d*ft",attr_group)[0]
                     post_sqft = int(post_sqft[:-2])

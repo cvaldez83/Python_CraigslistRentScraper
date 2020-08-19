@@ -24,7 +24,7 @@ for city in cities:
     if not os.path.isfile(os.path.join(os.getcwd(), 'data', f'main_{city}.csv')):
         df.to_csv(os.path.join(os.getcwd(), 'data', f'main_{city}.csv'))
     else:
-        df_main = pd.read_csv(os.path.join(os.getcwd(),'data','main.csv'), index_col='datetimes')
+        df_main = pd.read_csv(os.path.join(os.getcwd(),'data',f'main_{city}.csv'), index_col='datetimes')
         print(df_main)
         df_main = pd.concat([df_main, df])
         print('after concat')

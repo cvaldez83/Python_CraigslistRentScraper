@@ -1,5 +1,5 @@
 # cities = [
-#     'sandiego'
+#     'palmsprings'
 # ]
 
 cities = [
