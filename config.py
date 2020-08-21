@@ -1,9 +1,9 @@
-# cities = [
-#     'palmsprings'
-# ]
-
 cities = [
-    'sandiego',
-    'palmsprings',
-    'phoenix'
+    'palmsprings'
 ]
+
+# cities = [
+#     'sandiego',
+#     'palmsprings',
+#     'phoenix'
+# ]

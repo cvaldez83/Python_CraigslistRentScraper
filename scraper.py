@@ -22,7 +22,10 @@ def Scrape(city):
     def get_response(url, proxies):
         response = get(url, proxies=proxies)
         while response.status_code != 200:
+            # if response.status_code == 404:
+            #     return '404 Error'
             print(f'response code not 200: {response.status_code}')
+            print(f'for url {url}')
             proxies = get_proxies()
             response = get(url, proxies=proxies)
             resp_code = response.status_code
@@ -94,19 +97,18 @@ def Scrape(city):
 
                 """ grab the datetime element 0 for date and 1 for time """
                 post_datetime = post.find('time', class_='result-date')['datetime']
-                post_datetimes.append(post_datetime)
+                
 
                 """ grab the neighborhoods """
                 post_hood = post.find('span', class_='result-hood').text
-                post_hoods.append(post_hood)
+                
 
                 """ grab post title """
                 post_title = post.find('a', class_='result-title hdrlnk').text
-                post_titles.append(post_title)
+                
 
                 """ grab post link """
                 post_link = post.find('a', class_='result-title hdrlnk')['href']
-                post_links.append(post_link)
                 # print(post_link)
 
                 """ grab post prices """
@@ -114,65 +116,56 @@ def Scrape(city):
                 """ removes the \n whitespace from each side, removes the $ and comma symbols, and turns it into an int """
                 post_price = post_price.strip().replace("$", "")
                 post_price = post_price.replace(",","")
-                post_prices.append(post_price)
                 # print(post_price)
 
                 """ Dive deeper by scraping each post_link """
+
                 response_deepdive = get_response(post_link, proxies=proxies)
                 sleep(randint(1,5))
+
                 html_soup_deepdive = BeautifulSoup(response_deepdive.text, 'html.parser')
-                
+    
                 """ grab property address from deep dive"""
                 post_address = html_soup_deepdive.find('div', class_='mapaddress')
-                if post_address is not None:
-                    post_addresses.append(post_address.text)
-                else:
-                    print(f'couldnt find address: {post_link}')
-                    post_addresses.append(np.nan)
                 
                 """ grab & split text inside attr_grp (may contain Ba, Br, sqft) """
                 attr_group = html_soup_deepdive.find('p', class_='attrgroup')
-                if attr_group is not None:
-                    attr_group = attr_group.text
-                # print('attr_group')
-                # print(attr_group)
-                
+                if attr_group is None:
+                    continue
 
                 """ grab bedrooms using regex from deep dive"""
                 if attr_group is not None and re.findall("\dBR",attr_group):
                 # if 'BR' in attr_group:
                     post_bedroom = re.findall("\dBR",attr_group)[0]
                     post_bedroom = int(post_bedroom[:-2])
-                    post_bedrooms.append(post_bedroom)
                     # print('post_bedroom')
                     # print(post_bedroom)
                 else:
                     print(f'couldnt find # of bedrooms: {post_link}')
-                    post_bedrooms.append(np.nan)
+                    post_bedroom = np.nan
 
                 """ grab bathrooms using regex from deep dive """
                 if attr_group is not None and re.findall("\dBa",attr_group):
                 # if 'Ba' in attr_group:
-                    post_bathroom = re.findall("\dBa",attr_group)[0]
-                    post_bathroom = int(post_bathroom[:-2])
-                    post_bathrooms.append(post_bathroom)
+                    post_bathroom = re.findall("(\d.\dBa|\dBa)",attr_group)[0]
+                    post_bathroom = float(post_bathroom[:-2])
+                    
                     # print('post_bathroom')
                     # print(post_bathroom)
                 else:
                     print(f'couldnt find # of bathrooms: {post_link}')
-                    post_bathrooms.append(np.nan)
+                    post_bathroom = np.nan
 
                 """ grab squarefootage using regex from deep dive """
                 if attr_group is not None and re.findall("\d*ft",attr_group):
                 # if 'ft2' in attr_group:
                     post_sqft = re.findall("\d*ft",attr_group)[0]
                     post_sqft = int(post_sqft[:-2])
-                    post_sqfts.append(post_sqft)
                     # print('sqft')
                     # print(post_sqft)
                 else:
                     print(f'couldnt find squarefootage: {post_link}')
-                    post_sqfts.append(np.nan)
+                    post_sqft = np.nan
 
                 """ grab property type if available """
                 attr_group = html_soup_deepdive.findAll('p', class_='attrgroup')
@@ -187,6 +180,21 @@ def Scrape(city):
                     post_property_types.append('condo')
                 else:
                     post_property_types.append('other')
+                
+                post_datetimes.append(post_datetime)
+                post_hoods.append(post_hood)
+                post_titles.append(post_title)
+                post_links.append(post_link)
+                post_prices.append(post_price)
+                if post_address is not None:
+                    post_addresses.append(post_address.text)
+                else:
+                    print(f'couldnt find address: {post_link}')
+                    post_addresses.append(np.nan)
+                post_bedrooms.append(post_bedroom)
+                post_bathrooms.append(post_bathroom)
+                post_sqfts.append(post_sqft)
+                
     
         iterations += 1
         print("Page " + str(iterations) + " scraped successfully!")
