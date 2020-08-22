@@ -19,24 +19,30 @@ def Scrape(city):
         print(f'obtained proxies: {proxies}')
         return proxies
 
-    def get_response(url, proxies):
-        response = get(url, proxies=proxies)
-        while response.status_code != 200:
-            # if response.status_code == 404:
-            #     return '404 Error'
-            print(f'response code not 200: {response.status_code}')
-            print(f'for url {url}')
-            proxies = get_proxies()
-            response = get(url, proxies=proxies)
-            resp_code = response.status_code
-        print(f'obtained response code: {response.status_code}')
-        return response
-        
     """ get an initial proxy, hopefully it works thru entire script """
     proxies = get_proxies()
 
+    def get_response(url, proxiess):
+        try:
+            response = get(url, proxies=proxiess)
+        except:
+            print('exception code ran for get_response')
+            global proxies
+            proxies = get_proxies()
+            response = get(url, proxies=proxies)
+        # while response.status_code != 200:
+        #     print(f'response code not 200: {response.status_code}')
+        #     print(f'for url {url}')
+        #     global proxies
+        #     proxies = get_proxies()
+        #     response = get(url, proxies=proxies)
+        #     resp_code = response.status_code
+        print(f'obtained response code: {response.status_code}')
+        return response
+        
+
     """ get the first page of apts/hsg for rent in {city} """
-    response = get_response(f'https://{city}.craigslist.org/search/apa?hasPic=1&availabilityMode=0&sale_date=all+dates', proxies=proxies)
+    response = get_response(f'https://{city}.craigslist.org/search/apa?hasPic=1&availabilityMode=0&sale_date=all+dates', proxiess=proxies)
 
     html_soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -47,9 +53,9 @@ def Scrape(city):
     print(f'total number of results: results_total = {results_total}')
 
 
-    """ each page has 119 posts so each new page is defined as follows: 
-    s=120, s=240, s=360, and so on. 
-    So we need to step in size 120 in the np.arange function """
+    """ each page has 119 posts so each new page is defined
+        as follows: s=120, s=240, s=360, and so on.
+        So we need to step in size 120 in the np.arange function """
     pages = np.arange(0, results_total+1, 120)
 
     """ initialize variables """
@@ -77,7 +83,7 @@ def Scrape(city):
         print(f'page: {url_str}')
 
         """ get response from url_str and throttle requests"""
-        response = get_response(url_str, proxies=proxies)
+        response = get_response(url_str, proxiess=proxies)
         sleep(randint(1,5))
 
         # """ throw warning for status codes that are not 200 """
@@ -120,7 +126,10 @@ def Scrape(city):
 
                 """ Dive deeper by scraping each post_link """
 
-                response_deepdive = get_response(post_link, proxies=proxies)
+                response_deepdive = get_response(post_link, proxiess=proxies)
+                if response_deepdive.status_code == 404:
+                    print('response code 404, continuing loop and getting new proxies')
+                    continue
                 sleep(randint(1,5))
 
                 html_soup_deepdive = BeautifulSoup(response_deepdive.text, 'html.parser')
@@ -130,8 +139,8 @@ def Scrape(city):
                 
                 """ grab & split text inside attr_grp (may contain Ba, Br, sqft) """
                 attr_group = html_soup_deepdive.find('p', class_='attrgroup')
-                if attr_group is None:
-                    continue
+                if attr_group is not None:
+                    attr_group = attr_group.text
 
                 """ grab bedrooms using regex from deep dive"""
                 if attr_group is not None and re.findall("\dBR",attr_group):

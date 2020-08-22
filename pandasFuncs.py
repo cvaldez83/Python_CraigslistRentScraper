@@ -5,8 +5,11 @@ def CleanDF(data_frame):
     df = data_frame
     print(f'number of rows for uncleaned df: {len(df.index)}')
 
-    """ drop duplicate URLs """
+    """ drop duplicate URLs, post titles, and addresses """
     df = df.drop_duplicates(subset=['links'])
+    df = df.drop_duplicates(subset=['titles'])
+    df = df.drop_duplicates(subset=['addresses'])
+
     print(f'number of rows after dropping duplicate links: {len(df.index)}')
 
     """ drop rows with nans for number of bedrooms """
