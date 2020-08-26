@@ -9,8 +9,8 @@ def Scrape(city):
     import numpy as np
     import re
     from fp.fp import FreeProxy
-
-    
+#    import os
+#    os.mkdir('test')
 
     def get_proxies():
         print('getting proxies...')

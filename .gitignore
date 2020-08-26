@@ -2,3 +2,5 @@ __pycache__
 venv
 test_proxy.py
 test_request_loop.py
+data/*
+!data/test.txt
