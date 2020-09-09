@@ -51,11 +51,11 @@ for city in cities:
         df.to_csv(os.path.join(abs_path, 'data', f'main_{city}.csv'))
     else:
         df_main = pd.read_csv(os.path.join(abs_path,'data',f'main_{city}.csv'), index_col='datetimes')
-        print(df_main)
+        # print(df_main)
         df_main = pd.concat([df_main, df])
-        print('after concat')
-        print(df_main)
+        # print('after concat')
+        # print(df_main)
         """ may as well clean the main df for duplicate links """
         df_main = CleanDF(df_main)
-        df_main.to_csv(os.path.join(abs_path, 'data', 'main.csv'))
+        df_main.to_csv(os.path.join(abs_path, 'data', f'main_{city}.csv'))
 
