@@ -40,7 +40,7 @@ for city in cities:
     file1.write(f'about to save file for {city}\n' )
     file1.close()
 
-    df.to_csv(os.path.join(abs_path, 'data', f'cleaned_{city}_{todayDate}.csv'))
+    # df.to_csv(os.path.join(abs_path, 'data', f'cleaned_{city}_{todayDate}.csv'))
 
     file1 = open(os.path.join(abs_path, 'data', "test.txt"), "a")
     file1.write(f'saved file for {city}\n' )
