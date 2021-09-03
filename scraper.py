@@ -1,3 +1,9 @@
+import logging
+logger = logging.getLogger('myapp')
+
+from proxyscrape import create_collector
+collector = create_collector('my-collector', 'http')
+
 def Scrape(city):
     """ import get to call a get request on the site """
     from time import sleep
@@ -8,15 +14,17 @@ def Scrape(city):
     from bs4 import BeautifulSoup
     import numpy as np
     import re
-    from fp.fp import FreeProxy
+    # from fp.fp import FreeProxy
+
 #    import os
 #    os.mkdir('test')
 
     def get_proxies():
-        print('getting proxies...')
-        proxy = FreeProxy(country_id='US').get()
-        proxies = {'http': proxy}
-        print(f'obtained proxies: {proxies}')
+        logger.info('getting proxies...')
+        proxy = collector.get_proxy()
+        # proxy = FreeProxy(country_id='US').get()
+        proxies = {'http': proxy.host}
+        logger.info(f'obtained proxies: {proxies}')
         return proxies
 
     """ get an initial proxy, hopefully it works thru entire script """
@@ -24,9 +32,10 @@ def Scrape(city):
 
     def get_response(url, proxiess):
         try:
+            print(f'func: get_response, proxiess: {proxiess}')
             response = get(url, proxies=proxiess)
         except:
-            print('exception code ran for get_response')
+            logger.info('func exception: get_response')
             global proxies
             proxies = get_proxies()
             response = get(url, proxies=proxies)
@@ -37,11 +46,12 @@ def Scrape(city):
         #     proxies = get_proxies()
         #     response = get(url, proxies=proxies)
         #     resp_code = response.status_code
-        print(f'obtained response code: {response.status_code}')
+        print(f'obtained response code: {response.status_code} for url: {url}')
         return response
         
 
     """ get the first page of apts/hsg for rent in {city} """
+    logger.info(f'getting first page of apts/hsg for ren in {city}')
     response = get_response(f'https://{city}.craigslist.org/search/apa?hasPic=1&availabilityMode=0&sale_date=all+dates', proxiess=proxies)
 
     html_soup = BeautifulSoup(response.text, 'html.parser')
@@ -50,7 +60,7 @@ def Scrape(city):
     results_total_soup = html_soup.find('div', class_='search-legend')
     results_total = results_total_soup.find('span', class_='totalcount').text
     results_total = int(results_total)
-    print(f'total number of results: results_total = {results_total}')
+    logger.info(f'total number of results: results_total = {results_total}')
 
 
     """ each page has 119 posts so each new page is defined
@@ -60,6 +70,7 @@ def Scrape(city):
 
     """ initialize variables """
     iterations = 0
+    progress_counter = 0
     post_datetimes = []
     post_hoods = []
     post_titles = []
@@ -98,6 +109,8 @@ def Scrape(city):
 
         """ loop thru each post to scrape its data """
         for post in posts_soup: # TODO: remove [0:2]
+            progress_counter += 1
+            print(f'progress: {progress_counter} of {results_total}')
 
             if post.find('span', class_='result-hood') is not None:
 
